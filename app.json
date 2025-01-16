@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "powervocab",
+    "slug": "powervocab",
+    "version": "1.0.0",
+    "sdkVersion": "52.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#94B7D7"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#91CAFF"
+      },
+      "package": "com.testingbruh.powervocab"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2bfd2c5d-4718-454d-b2b5-11c92807359e"
+      }
+    }
+  }
+}
