@@ -151,6 +151,13 @@ const AuthScreen = () => {
       contentContainerStyle={{ flexGrow: 1 }}
     >
       <StatusBar style="auto" />
+      <Alert
+        isVisible={showSuccessAlert}
+        onClose={() => setShowSuccessAlert(false)}
+        type="success"
+        title="Registration successful!"
+        message="Please sign in with your new account."
+      />
       <View className="flex-1 px-4 py-8 justify-center">
         <View className="max-w-md w-full mx-auto space-y-8">
           <View className="items-center">
@@ -261,14 +268,6 @@ const AuthScreen = () => {
           </View>
         </View>
       </View>
-
-      <Alert
-        isVisible={showSuccessAlert}
-        onClose={() => setShowSuccessAlert(false)}
-        type="success"
-        title="Registration successful!"
-        message="Please sign in with your new account."
-      />
     </ScrollView>
   )
 }

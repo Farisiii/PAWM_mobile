@@ -5,12 +5,12 @@
     "version": "1.0.0",
     "sdkVersion": "52.0.0",
     "orientation": "portrait",
-    "icon": "./assets/image_icon.png",
+    "icon": "./assets/adaptive_icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/image_splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#94B7D7"
     },
     "ios": {
@@ -30,6 +30,9 @@
       "eas": {
         "projectId": "2bfd2c5d-4718-454d-b2b5-11c92807359e"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

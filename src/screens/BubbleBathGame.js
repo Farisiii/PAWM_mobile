@@ -456,7 +456,7 @@ const BubbleBathGame = ({ route, navigation }) => {
               >
                 <View className="bg-primary-500 p-8 rounded-2xl w-full mb-8">
                   <Text className="text-3xl text-white font-bold mb-4 text-center">
-                    Welcome to BubleBath!
+                    Kata Makna
                   </Text>
                   <Text className="text-lg text-white opacity-90 text-center mb-6">
                     Cocokkan 5 pasangan kata bahasa Inggris secara acak dengan
