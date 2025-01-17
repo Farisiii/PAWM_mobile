@@ -5,94 +5,82 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native'
-import {
-  PlayCircle,
-  Library,
-  AlertCircle,
-  ArrowLeft,
-} from 'lucide-react-native'
-import { Progress } from '@/components/common/progress'
+import { Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useToast } from '@/hooks/use-toast'
 
-const baseUrl = 'https://web-production-a314.up.railway.app'
+const BASE_URL = 'https://web-production-a314.up.railway.app'
+
+const ProgressBar = ({ value }) => (
+  <View className="h-2 bg-primary-100 rounded-full overflow-hidden">
+    <View
+      className="h-full bg-primary-600 rounded-full"
+      style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
+    />
+  </View>
+)
+
+const StatBadge = ({ label, value }) => (
+  <View className="bg-primary-50 px-4 py-2 rounded-full">
+    <Text className="text-primary-400">
+      <Text className="font-medium">{label}: </Text>
+      {value}
+    </Text>
+  </View>
+)
 
 const CardDetailScreen = ({ route, navigation }) => {
-  if (!route?.params?.cardId) {
-    return (
-      <View className="flex-1 bg-white items-center justify-center p-6">
-        <AlertCircle className="w-16 h-16 text-error-500" />
-        <Text className="mt-4 text-error-600 font-semibold text-xl text-center">
-          Invalid card ID
-        </Text>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="mt-6 bg-primary-600 px-6 py-3 rounded-xl"
-        >
-          <Text className="text-white font-semibold">Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    )
-  }
-
-  const { cardId } = route.params
   const [card, setCard] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const { toast } = useToast()
+  const cardId = route?.params?.cardId
 
   useEffect(() => {
-    if (cardId) {
-      fetchCardData()
+    if (!cardId) {
+      setError('Invalid card ID')
+      setIsLoading(false)
+      return
     }
+    fetchCardData()
   }, [cardId])
-
-  const handleBackPress = () => {
-    navigation.navigate('LearningCards')
-  }
 
   const fetchCardData = async () => {
     try {
-      setIsLoading(true)
-      setError(null)
-
       const token = await AsyncStorage.getItem('token')
-      if (!token) {
-        throw new Error('No authentication token found')
-      }
+      if (!token) throw new Error('Authentication required')
 
-      const response = await fetch(`${baseUrl}/api/cards/${cardId}`, {
-        method: 'GET',
+      const response = await fetch(`${BASE_URL}/api/cards/${cardId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          Accept: 'application/json',
         },
       })
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Card not found')
-        }
-        if (response.status === 401) {
-          throw new Error('Unauthorized - Please login again')
-        }
-        throw new Error(`Server error: ${response.status}`)
+        throw new Error(
+          response.status === 404
+            ? 'Card not found'
+            : response.status === 401
+            ? 'Session expired - Please login again'
+            : 'Failed to load card data'
+        )
       }
 
       const data = await response.json()
-      if (!data) {
-        throw new Error('No data received from server')
-      }
+      if (!data) throw new Error('No data received')
 
       setCard(data)
     } catch (error) {
-      console.error('Error fetching card:', error.message)
+      console.error('Error:', error)
       setError(error.message)
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load card data',
+        description: error.message,
         variant: 'destructive',
       })
     } finally {
@@ -100,45 +88,51 @@ const CardDetailScreen = ({ route, navigation }) => {
     }
   }
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 bg-primary-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#6366F1" />
-        <Text className="mt-4 text-primary-600 font-medium">
-          Loading card details...
-        </Text>
-      </View>
-    )
-  }
+  const renderLoadingState = () => (
+    <View className="flex-1 bg-primary-50 items-center justify-center">
+      <ActivityIndicator size="large" color="#6366F1" />
+      <Text className="mt-4 text-primary-600 font-medium">
+        Loading card details...
+      </Text>
+    </View>
+  )
 
-  if (error || !card) {
-    return (
-      <View className="flex-1 bg-white items-center justify-center p-6">
-        <AlertCircle className="w-16 h-16 text-error-500" />
+  const renderErrorState = () => (
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1 items-center justify-center p-6">
+        <Ionicons name="alert-circle" size={64} color="#EF4444" />
         <Text className="mt-4 text-error-600 font-semibold text-xl text-center">
           {error || 'Failed to load card'}
         </Text>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('LearningCards')}
           className="mt-6 bg-primary-600 px-6 py-3 rounded-xl"
         >
           <Text className="text-white font-semibold">Go Back</Text>
         </TouchableOpacity>
       </View>
-    )
-  }
+    </SafeAreaView>
+  )
+
+  if (isLoading) return renderLoadingState()
+  if (error || !card) return renderErrorState()
 
   const learnedWords = card.wordPairs.filter((pair) => pair.isLearned).length
   const progress = (learnedWords / card.wordPairs.length) * 100
 
   return (
-    <View className="flex-1 bg-primary-50">
+    <SafeAreaView
+      className="flex-1 bg-primary-50"
+      style={{
+        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+      }}
+    >
       <View className="px-4 pt-6 pb-4">
         <TouchableOpacity
-          onPress={handleBackPress}
+          onPress={() => navigation.navigate('LearningCards')}
           className="flex-row items-center mb-6"
         >
-          <ArrowLeft color="#56A7F5" size={24} />
+          <Ionicons name="arrow-back" size={24} color="#56A7F5" />
           <Text className="ml-2 text-primary-400 font-medium text-base">
             Back to Learning Cards
           </Text>
@@ -150,29 +144,14 @@ const CardDetailScreen = ({ route, navigation }) => {
           </Text>
 
           <View className="flex-row flex-wrap justify-center gap-2">
-            <View className="bg-primary-50 px-4 py-2 rounded-full">
-              <Text className="text-primary-400">
-                <Text className="font-medium">Target Days: </Text>
-                {card.targetDays}
-              </Text>
-            </View>
-            <View className="bg-primary-50 px-4 py-2 rounded-full">
-              <Text className="text-primary-400">
-                <Text className="font-medium">Progress: </Text>
-                {progress.toFixed(1)}%
-              </Text>
-            </View>
-            <View className="bg-primary-50 px-4 py-2 rounded-full">
-              <Text className="text-primary-400">
-                <Text className="font-medium">Words: </Text>
-                {card.wordPairs.length}
-              </Text>
-            </View>
+            <StatBadge label="Target Days" value={card.targetDays} />
+            <StatBadge label="Progress" value={`${progress.toFixed(1)}%`} />
+            <StatBadge label="Words" value={card.wordPairs.length} />
           </View>
         </View>
 
         <View className="mb-6">
-          <Progress value={progress} className="h-2 bg-primary-100" />
+          <ProgressBar value={progress} />
         </View>
 
         <View className="flex-row gap-4 mb-8">
@@ -182,17 +161,13 @@ const CardDetailScreen = ({ route, navigation }) => {
               navigation.navigate('FlashCard', { cardId: card.id })
             }
           >
-            <PlayCircle size={24} className="text-white mr-3" />
-            <Text className="text-lg font-medium text-white">
-              Flashcard Mode
-            </Text>
+            <Text className="text-lg font-medium text-white">Flashcard</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="flex-1 bg-primary-500 p-6 rounded-xl flex-row items-center justify-center"
             onPress={() => navigation.navigate('Games', { cardId: card.id })}
           >
-            <Library size={24} className="text-white mr-3" />
             <Text className="text-lg font-medium text-white">Game Mode</Text>
           </TouchableOpacity>
         </View>
@@ -226,7 +201,7 @@ const CardDetailScreen = ({ route, navigation }) => {
           ))}
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 

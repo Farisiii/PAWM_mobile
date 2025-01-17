@@ -1,8 +1,16 @@
 import React, { useState, useCallback } from 'react'
-import { View, Text, ScrollView } from 'react-native'
-import { Plus, LogOut, Loader2 } from 'lucide-react-native'
-import { useToast } from '@/hooks/use-toast'
-import { Button } from '@/components/common/button'
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
+  Dimensions,
+  Pressable,
+} from 'react-native'
+import { Feather } from '@expo/vector-icons' // Changed to Feather icons which are commonly available
+import { useToast } from '../hooks/use-toast'
+import { Button } from '../components/common/Button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,12 +20,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/common/alert-dialog'
+  AlertDialogTrigger,
+} from '../components/common/alert-dialog'
 import AddCardDialog from '../components/LearningCards/AddCardDialog'
 import LearningCard from '../components/LearningCards/LearningCard'
-import { fetchCards, createCard, updateCard, deleteCard } from '@/services/api'
+import { fetchCards, createCard, updateCard, deleteCard } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useFocusEffect } from '@react-navigation/native'
+import { StatusBar } from 'expo-status-bar'
+import { SafeAreaView } from 'react-native-safe-area-context'
+
+const { width } = Dimensions.get('window')
 
 const LearningCardsScreen = () => {
   const { signOut } = useAuth()
@@ -28,18 +41,17 @@ const LearningCardsScreen = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedCard, setSelectedCard] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useFocusEffect(
-    useCallback(() => {
-      loadCards()
-    }, [])
-  )
-
-  const loadCards = async () => {
+  const loadCards = useCallback(async () => {
     try {
       setIsLoading(true)
       const loadedCards = await fetchCards()
-      setCards(loadedCards)
+      setCards(
+        loadedCards.sort(
+          (a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated)
+        )
+      )
     } catch (error) {
       console.error('Error loading cards:', error)
       toast({
@@ -49,25 +61,34 @@ const LearningCardsScreen = () => {
       })
     } finally {
       setIsLoading(false)
+      setRefreshing(false)
     }
-  }
+  }, [toast])
 
-  const memorizedCount = cards.filter((card) => card.isMemorized).length
+  useFocusEffect(
+    useCallback(() => {
+      loadCards()
+    }, [loadCards])
+  )
 
   const handleCardSubmit = async (cardData) => {
     try {
+      const formattedWordPairs = cardData.wordPairs.map((pair) => ({
+        english: pair.english.trim(),
+        indonesian: pair.indonesian.trim(),
+        is_learned: pair.is_learned || false,
+      }))
+
       if (selectedCard) {
         const updatedCard = await updateCard(selectedCard.id, {
           ...cardData,
-          wordPairs: cardData.wordPairs.map((pair, index) => ({
-            english: pair.english,
-            indonesian: pair.indonesian,
-            is_learned: pair.is_learned,
-          })),
+          wordPairs: formattedWordPairs,
           lastUpdated: new Date().toISOString(),
         })
-        setCards(
-          cards.map((card) => (card.id === updatedCard.id ? updatedCard : card))
+        setCards((prevCards) =>
+          prevCards.map((card) =>
+            card.id === updatedCard.id ? updatedCard : card
+          )
         )
         toast({
           title: 'Success',
@@ -77,16 +98,12 @@ const LearningCardsScreen = () => {
       } else {
         const newCard = await createCard({
           ...cardData,
-          wordPairs: cardData.wordPairs.map((pair) => ({
-            english: pair.english,
-            indonesian: pair.indonesian,
-            is_learned: false,
-          })),
+          wordPairs: formattedWordPairs,
           isMemorized: false,
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString(),
         })
-        setCards([...cards, newCard])
+        setCards((prevCards) => [newCard, ...prevCards])
         toast({
           title: 'Success',
           description: 'New card created successfully',
@@ -108,26 +125,28 @@ const LearningCardsScreen = () => {
       const cardToUpdate = cards.find((card) => card.id === cardId)
       if (!cardToUpdate) return
 
-      const response = await updateCard(cardId, {
+      const updatedCard = {
         ...cardToUpdate,
-        wordPairs: cardToUpdate.wordPairs.map((pair) => ({
-          ...pair,
-          is_learned: pair.is_learned,
-        })),
+        isMemorized: !cardToUpdate.isMemorized,
         lastUpdated: new Date().toISOString(),
-      })
+      }
 
-      setCards(cards.map((card) => (card.id === cardId ? response : card)))
+      const response = await updateCard(cardId, updatedCard)
+      setCards((prevCards) =>
+        prevCards.map((card) => (card.id === cardId ? response : card))
+      )
 
       toast({
         title: 'Success',
-        description: 'Progress updated successfully',
+        description: `Card marked as ${
+          response.isMemorized ? 'memorized' : 'not memorized'
+        }`,
         className: 'bg-success-50 border-success-200',
       })
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update progress',
+        description: 'Failed to update card status',
         variant: 'destructive',
       })
     }
@@ -138,7 +157,9 @@ const LearningCardsScreen = () => {
 
     try {
       await deleteCard(selectedCard.id)
-      setCards(cards.filter((card) => card.id !== selectedCard.id))
+      setCards((prevCards) =>
+        prevCards.filter((card) => card.id !== selectedCard.id)
+      )
       toast({
         title: 'Success',
         description: 'Card deleted successfully',
@@ -182,147 +203,254 @@ const LearningCardsScreen = () => {
     }
   }
 
+  const getGridColumns = () => {
+    if (width >= 1024) return 3 // lg
+    if (width >= 768) return 2 // md
+    return 1 // default
+  }
+
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-primary-50">
-        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-        <Text className="mt-4 text-base text-primary-600">
-          Loading cards...
-        </Text>
-      </View>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F0F7FF' }}>
+        <StatusBar style="dark" />
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <ActivityIndicator size="large" color="#1570DA" />
+          <Text style={{ marginTop: 16, fontSize: 16, color: '#1570DA' }}>
+            Loading cards...
+          </Text>
+        </View>
+      </SafeAreaView>
     )
   }
 
   return (
-    <View className="flex-1 bg-primary-50">
-      <View className="bg-white shadow-sm px-4 py-4">
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: '#1570DA',
-              }}
-            >
-              PowerVocab
-            </Text>
-            <Text className="text-sm text-primary-500 mt-1">
-              There {cards.length < 2 ? 'is' : 'are'} {cards.length}{' '}
-              {cards.length < 2 ? 'card' : 'cards'}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center space-x-3">
-            <Button
-              onPress={() => handleOpenDialog()}
-              className="bg-gradient-to-r from-primary-600 to-secondary-600"
-            >
-              <Text className="text-white font-medium">New Card</Text>
-            </Button>
-
-            <Button
-              onPress={handleLogout}
-              variant="outline"
-              className="border-error-200"
-            >
-              <Text className="text-error-500 font-medium">Logout</Text>
-            </Button>
-          </View>
-        </View>
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 32 }}
-      >
-        {cards.length === 0 ? (
-          <View className="items-center justify-center py-12">
-            <View className="bg-white rounded-xl shadow-sm border border-primary-100 p-6 max-w-md w-full">
-              <Text className="text-lg font-medium text-primary-700 text-center mb-4">
-                No Learning Cards Yet
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F0F7FF' }}>
+      <StatusBar style="dark" />
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
+            elevation: 3,
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                  color: '#1570DA',
+                  fontFamily: Platform.select({
+                    ios: 'System',
+                    android: 'Roboto',
+                  }),
+                }}
+              >
+                PowerVocab
               </Text>
-              <Text className="text-base text-primary-500 text-center mb-6">
-                Create your first learning card to start improving your
-                vocabulary
+              <Text style={{ fontSize: 14, color: '#1570DA', marginTop: 4 }}>
+                {cards.length} {cards.length === 1 ? 'card' : 'cards'} available
               </Text>
+            </View>
+
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+            >
               <Button
                 onPress={() => handleOpenDialog()}
-                className="bg-gradient-to-r from-primary-600 to-secondary-600"
+                style={{
+                  backgroundColor: '#1570DA',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
               >
-                <Plus size={18} className="mr-2" />
-                <Text className="text-white font-medium">
-                  Create First Card
-                </Text>
+                <Feather
+                  name="plus"
+                  size={18}
+                  color="white"
+                  style={{ marginRight: 8 }}
+                />
+              </Button>
+
+              <Button
+                onPress={handleLogout}
+                style={{
+                  backgroundColor: '#F04438',
+                  borderWidth: 1,
+                  borderColor: '#ffffff',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 12,
+                  borderRadius: 8,
+                }}
+              >
+                <Feather
+                  name="log-out"
+                  size={18}
+                  color="#ffffff"
+                  style={{ marginRight: 8 }}
+                />
               </Button>
             </View>
           </View>
-        ) : (
-          <View className="flex-1 items-center -mt-2 -mb-4">
-            <View className="w-full max-w-7xl">
-              <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {cards.map((card) => (
+        </View>
+
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingTop: 32,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {cards.length === 0 ? (
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 48,
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#E5E7EB',
+                  padding: 24,
+                  width: '100%',
+                  maxWidth: 400,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: '500',
+                    color: '#1570DA',
+                    textAlign: 'center',
+                    marginBottom: 16,
+                  }}
+                >
+                  No Learning Cards Yet
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    marginBottom: 24,
+                  }}
+                >
+                  Create your first learning card to start improving your
+                  vocabulary
+                </Text>
+                <Button
+                  onPress={() => handleOpenDialog()}
+                  style={{
+                    backgroundColor: '#1570DA',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 12,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Feather
+                    name="plus"
+                    size={18}
+                    color="white"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={{ color: 'white', fontWeight: '500' }}>
+                    Create First Card
+                  </Text>
+                </Button>
+              </View>
+            </View>
+          ) : (
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                marginHorizontal: -8,
+              }}
+            >
+              {cards.map((card) => (
+                <View
+                  key={card.id}
+                  style={{
+                    width: `${100 / getGridColumns()}%`,
+                    paddingHorizontal: 8,
+                    marginBottom: 16,
+                  }}
+                >
                   <LearningCard
-                    key={card.id}
                     card={card}
                     onEdit={() => handleOpenDialog(card)}
                     onDelete={() => handleOpenDeleteDialog(card)}
                     onToggleMemorized={() => handleToggleMemorized(card.id)}
                   />
-                ))}
-              </View>
+                </View>
+              ))}
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
 
-      <AddCardDialog
-        isOpen={isDialogOpen}
-        onClose={handleCloseDialog}
-        onSubmit={handleCardSubmit}
-        initialData={selectedCard}
-        isEditing={!!selectedCard}
-      />
+        <AddCardDialog
+          isOpen={isDialogOpen}
+          onClose={handleCloseDialog}
+          onSubmit={handleCardSubmit}
+          initialData={selectedCard}
+          isEditing={!!selectedCard}
+        />
 
-      <AlertDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => {
-          setIsDeleteDialogOpen(false)
-          setSelectedCard(null)
-        }}
-      >
-        <AlertDialogContent className="fixed inset-0 m-auto max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-semibold text-gray-900">
-              Delete Learning Card?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base text-gray-500 mt-2">
-              This action cannot be undone. This card and all its contents will
-              be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-6">
-            <View className="flex-row space-x-3 w-full">
+        <AlertDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false)
+            setSelectedCard(null)
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Learning Card?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This card and all its contents
+                will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
               <AlertDialogCancel
-                className="flex-1"
                 onPress={() => {
                   setIsDeleteDialogOpen(false)
                   setSelectedCard(null)
                 }}
               >
-                <Text className="text-gray-700 font-medium">Cancel</Text>
+                Cancel
               </AlertDialogCancel>
-              <AlertDialogAction
-                className="flex-1 bg-error-600"
-                onPress={handleDeleteCard}
-              >
-                <Text className="text-white font-medium">Delete</Text>
+              <AlertDialogAction onPress={handleDeleteCard}>
+                Delete
               </AlertDialogAction>
-            </View>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </View>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </View>
+    </SafeAreaView>
   )
 }
 

@@ -8,13 +8,7 @@ import {
   ScrollView,
   Animated,
 } from 'react-native'
-import {
-  ArrowLeft,
-  RotateCcw,
-  ArrowLeftRight,
-  Globe,
-  Trophy,
-} from 'lucide-react-native'
+import { Feather } from '@expo/vector-icons'
 import { useToast } from '@/hooks/use-toast'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -241,9 +235,9 @@ const TranslationGame = () => {
         <View className="p-4 pt-8">
           <TouchableOpacity
             onPress={handleBack}
-            className="flex-row items-center mb-6"
+            className="flex-row items-center mb-6 pt-8"
           >
-            <ArrowLeft color="#56A7F5" size={24} />
+            <Feather name="arrow-left" size={20} color="#1570DA" />
             <Text className="ml-2 text-primary-400 font-medium text-base">
               Back to games
             </Text>
@@ -251,7 +245,7 @@ const TranslationGame = () => {
 
           <View className="flex-row justify-between items-center mb-6">
             <View className="flex-row items-center">
-              <Globe size={24} color="#56A7F5" />
+              <Feather name="globe" size={24} color="#56A7F5" />
               <Text className="text-2xl font-bold text-primary-600 ml-2">
                 Translation Game
               </Text>
@@ -269,10 +263,6 @@ const TranslationGame = () => {
               }`}
               disabled={hasStarted}
             >
-              <ArrowLeftRight
-                size={20}
-                color={hasStarted ? '#9CA3AF' : '#1570DA'}
-              />
               <Text
                 className={`ml-2 ${
                   hasStarted ? 'text-gray-400' : 'text-primary-600'
@@ -285,7 +275,7 @@ const TranslationGame = () => {
               onPress={resetGame}
               className="flex-row items-center bg-white px-4 py-2 rounded-lg border border-secondary-200"
             >
-              <RotateCcw size={20} color="#6172F3" />
+              <Feather name="rotate-ccw" size={20} color="#6172F3" />
               <Text className="ml-2 text-secondary-600">Reset</Text>
             </TouchableOpacity>
           </View>
@@ -344,7 +334,7 @@ const TranslationGame = () => {
             </View>
           ) : (
             <View className="items-center justify-center py-8">
-              <Trophy size={80} color="#F99A3D" />
+              <Feather name="trophy" size={80} color="#F99A3D" />
               <Text className="text-3xl font-bold text-primary-600 mt-6">
                 Game Complete!
               </Text>

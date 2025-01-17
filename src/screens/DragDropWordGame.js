@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native'
-import { ArrowLeft, HelpCircle, RefreshCw } from 'lucide-react-native'
+import { Feather } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import Animated, {
   useAnimatedStyle,
@@ -196,17 +196,23 @@ const DragDropWordGame = () => {
   }))
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-50">
+    <SafeAreaView className="flex-1 bg-primary-50 pt-7">
       <ScrollView className="flex-1 p-4">
-        <View className="flex-row justify-between items-center mb-4">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2">
-            <ArrowLeft color="#1570DA" size={24} />
+        <View className="flex-row justify-between items-center mb-6 pt-3">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="flex-row items-center justify-center"
+          >
+            <Feather name="arrow-left" size={20} color="#1570DA" />
+            <Text className="ml-2 text-primary-400 font-medium text-base">
+              Back to Games
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setShowTutorial(!showTutorial)}
             className="p-2"
           >
-            <HelpCircle color="#1570DA" size={24} />
+            <Feather name="help-circle" color="#1570DA" size={24} />
           </TouchableOpacity>
         </View>
 
@@ -341,7 +347,6 @@ const DragDropWordGame = () => {
                 onPress={resetGame}
                 className="flex-1 py-4 bg-primary-500 rounded-lg flex-row justify-center items-center"
               >
-                <RefreshCw color="white" size={20} className="mr-2" />
                 <Text className="text-white text-center text-lg">New Game</Text>
               </TouchableOpacity>
             </View>

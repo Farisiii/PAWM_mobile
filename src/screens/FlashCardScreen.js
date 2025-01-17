@@ -6,20 +6,14 @@ import {
   Pressable,
   Dimensions,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import {
-  ArrowLeft,
-  Check,
-  X,
-  Loader2,
-  BookOpen,
-  AlertCircle,
-} from 'lucide-react-native'
-import { Button } from '@/components/common/button'
+import { Button } from '@/components/common/Button'
 import { Progress } from '@/components/common/progress'
 import { useToast } from '@/hooks/use-toast'
+import { Ionicons } from '@expo/vector-icons'
 
 const baseUrl = 'https://web-production-a314.up.railway.app'
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
@@ -119,7 +113,7 @@ const FlashCardPage = () => {
         description: 'No card ID provided',
         variant: 'destructive',
       })
-      navigation.goBack()
+      navigation.navigate('CardDetail', { cardId })
       return
     }
 
@@ -371,7 +365,6 @@ const FlashCardPage = () => {
     <View className="flex-1 items-center justify-center bg-primary-50">
       <StatusBar barStyle="dark-content" />
       <View className="bg-white p-8 rounded-3xl shadow-lg items-center">
-        <Loader2 className="w-16 h-16 text-primary-600 animate-spin" />
         <Text className="mt-6 text-primary-600 font-semibold text-xl text-center">
           Preparing your flashcards
         </Text>
@@ -386,18 +379,15 @@ const FlashCardPage = () => {
     <View className="flex-1 items-center justify-center bg-primary-50 p-6">
       <StatusBar barStyle="dark-content" />
       <View className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-sm">
-        <AlertCircle className="w-16 h-16 text-error-500 mx-auto" />
         <Text className="mt-6 text-error-600 font-semibold text-xl text-center">
           Oops! Something went wrong
         </Text>
         <Text className="mt-2 text-error-400 text-center mb-6">{error}</Text>
         <Button
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('CardDetail', { cardId })}
           className="bg-primary-600 py-4 rounded-2xl w-full"
         >
-          <Text className="text-white font-semibold text-lg">
-            Return to Deck
-          </Text>
+          <Text className="text-white font-semibold text-lg">Back</Text>
         </Button>
       </View>
     </View>
@@ -409,12 +399,11 @@ const FlashCardPage = () => {
     return (
       <View className="flex-1 items-center justify-center bg-primary-50 p-6">
         <View className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-sm">
-          <BookOpen className="w-16 h-16 text-primary-500 mx-auto" />
           <Text className="mt-6 text-primary-600 font-semibold text-xl text-center">
             No flashcards available
           </Text>
           <Button
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('CardDetail', { cardId })}
             className="mt-6 bg-primary-600 py-4 rounded-2xl w-full"
           >
             <Text className="text-white font-semibold text-lg">
@@ -435,13 +424,15 @@ const FlashCardPage = () => {
         className="px-6 pt-14 pb-6 bg-white shadow-sm"
       >
         <View className="flex-row items-center justify-between mb-6">
-          <Button
-            onPress={handleBackPress}
-            className="flex-row items-center p-2 bg-primary-50 rounded-full shadow-sm"
-            variant="ghost"
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CardDetail', { cardId })}
+            className="flex-row items-center mb-6 pt-4"
           >
-            <ArrowLeft size={24} className="text-primary-600" />
-          </Button>
+            <Ionicons name="arrow-back" size={24} color="#56A7F5" />
+            <Text className="ml-2 text-primary-400 font-medium text-base">
+              Back to Card Detail
+            </Text>
+          </TouchableOpacity>
           <View className="bg-primary-50 px-6 py-3 rounded-full shadow-sm">
             <Text className="text-base text-primary-600 font-semibold">
               {currentIndex + 1} / {cardDetails.totalWords}
@@ -520,16 +511,14 @@ const FlashCardPage = () => {
             className="flex-1 bg-white border-2 border-error-100 h-16 rounded-2xl shadow-sm"
           >
             <Text className="ml-2 text-error-600 font-semibold text-lg">
-              Need Review
+              Belum Tahu
             </Text>
           </Button>
           <Button
             onPress={handleKnown}
             className="flex-1 bg-success-500 h-16 rounded-2xl shadow-sm"
           >
-            <Text className="ml-2 text-white font-semibold text-lg">
-              Mastered!
-            </Text>
+            <Text className="ml-2 text-white font-semibold text-lg">Tahu!</Text>
           </Button>
         </View>
       </View>

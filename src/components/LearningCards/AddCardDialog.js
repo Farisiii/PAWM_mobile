@@ -7,10 +7,11 @@ import {
   Keyboard,
   Modal,
   Pressable,
+  TouchableOpacity,
 } from 'react-native'
-import { Check, Trash2, Plus, AlertCircle, X } from 'lucide-react-native'
-import { Button } from '@/components/common/button'
 import { BlurView } from 'expo-blur'
+import { Ionicons } from '@expo/vector-icons'
+import { Button } from '@/components/common/Button'
 import { styled } from 'nativewind'
 
 const StyledView = styled(View)
@@ -34,14 +35,14 @@ const Dialog = ({ isOpen, onClose, children }) => {
           height: '100%',
         }}
       >
-        <StyledView className="absolute inset-0 bg-black/1" />
+        <StyledView className="absolute inset-0 bg-black/10" />
+        {children}
       </BlurView>
-      {children}
     </Modal>
   )
 }
 
-const DialogContent = ({ className, children, ...props }) => (
+const DialogContent = ({ className = '', children, ...props }) => (
   <StyledView className="flex-1 justify-center items-center px-4">
     <StyledView
       className={`w-full max-w-lg bg-white rounded-lg shadow-lg z-50 ${className}`}
@@ -52,26 +53,29 @@ const DialogContent = ({ className, children, ...props }) => (
   </StyledView>
 )
 
-const DialogHeader = ({ className, onClose, ...props }) => (
+const DialogHeader = ({ className = '', onClose, children, ...props }) => (
   <StyledView className={`px-6 space-y-1.5 relative ${className}`} {...props}>
-    {props.children}
-    <StyledPressable
-      className="absolute right-0 -top-3 p-2 rounded-full active:bg-gray-100"
+    {children}
+    <TouchableOpacity
+      className="absolute right-0 -top-3 p-2 rounded-full"
       onPress={onClose}
+      activeOpacity={0.7}
     >
-      <X size={24} className="text-gray-500" />
-    </StyledPressable>
+      <Ionicons name="close" size={24} color="#6B7280" />
+    </TouchableOpacity>
   </StyledView>
 )
 
-const DialogFooter = ({ className, ...props }) => (
+const DialogFooter = ({ className = '', children, ...props }) => (
   <StyledView
     className={`flex-row justify-end space-x-2 p-6 ${className}`}
     {...props}
-  />
+  >
+    {children}
+  </StyledView>
 )
 
-const DialogTitle = ({ className, ...props }) => (
+const DialogTitle = ({ className = '', ...props }) => (
   <StyledText className={`text-lg font-semibold ${className}`} {...props} />
 )
 
@@ -186,15 +190,6 @@ const AddCardDialog = ({
     }))
   }
 
-  const toggleWordLearned = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      wordPairs: prev.wordPairs.map((pair, i) =>
-        i === index ? { ...pair, is_learned: !pair.is_learned } : pair
-      ),
-    }))
-  }
-
   const handleNextStep = () => {
     if (formData.wordPairs.length >= MIN_WORD_PAIRS) {
       setError('')
@@ -272,7 +267,7 @@ const AddCardDialog = ({
 
         {error && (
           <View className="flex-row items-center space-x-2 p-3 bg-error-50 rounded-lg">
-            <AlertCircle size={18} className="text-error-500" />
+            <Ionicons name="alert-circle" size={18} color="#EF4444" />
             <Text className="text-error-500 text-sm flex-1">{error}</Text>
           </View>
         )}
@@ -282,8 +277,7 @@ const AddCardDialog = ({
           className="bg-primary-600 py-3"
           disabled={!formData.currentEnglish || !formData.currentIndonesian}
         >
-          <Plus size={18} className="mr-2" />
-          <Text className="text-white font-medium">Tambah Kata</Text>
+          <Text className="text-white font-medium ml-2">Tambah Kata</Text>
         </Button>
       </View>
     </View>
@@ -307,14 +301,13 @@ const AddCardDialog = ({
                   {pair.indonesian}
                 </Text>
               </View>
-              <View className="flex-row items-center space-x-2">
-                <Button
-                  onPress={() => removeWordPair(index)}
-                  className="p-2 bg-transparent"
-                >
-                  <Trash2 size={18} className="text-error-500" />
-                </Button>
-              </View>
+              <TouchableOpacity
+                onPress={() => removeWordPair(index)}
+                className="p-2"
+                activeOpacity={0.7}
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+              </TouchableOpacity>
             </View>
           ))}
         </View>

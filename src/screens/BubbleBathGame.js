@@ -11,15 +11,7 @@ import {
   StatusBar,
   InteractionManager,
 } from 'react-native'
-import {
-  ArrowLeft,
-  Trophy,
-  Info,
-  RotateCw,
-  CheckCircle,
-  XCircle,
-  HelpCircle,
-} from 'lucide-react-native'
+import { Feather } from '@expo/vector-icons'
 import Animated, {
   FadeIn,
   FadeOut,
@@ -330,8 +322,8 @@ const BubbleBathGame = ({ route, navigation }) => {
               onPress={navigateBack}
               className="mt-6 flex-row items-center justify-center"
             >
-              <ArrowLeft size={20} color="#1570DA" />
-              <Text className="ml-2 text-primary-600 font-medium">
+              <Feather name="arrow-left" size={20} color="#1570DA" />
+              <Text className="ml-2 text-primary-400 font-medium">
                 Return to Games
               </Text>
             </TouchableOpacity>
@@ -354,8 +346,8 @@ const BubbleBathGame = ({ route, navigation }) => {
               onPress={navigateBack}
               className="mt-6 flex-row items-center"
             >
-              <ArrowLeft size={20} color="#1570DA" />
-              <Text className="ml-2 text-primary-600 font-medium">
+              <Feather name="arrow-left" size={20} color="#1570DA" />
+              <Text className="ml-2 text-primary-400 font-medium">
                 Return to Games
               </Text>
             </TouchableOpacity>
@@ -369,7 +361,7 @@ const BubbleBathGame = ({ route, navigation }) => {
     matchedPairs.length === wordPairs.length && wordPairs.length > 0
 
   return (
-    <View className="flex-1 bg-primary-50">
+    <View className="flex-1 bg-primary-50 pt-10">
       <StatusBar barStyle="dark-content" backgroundColor="#F0F7FF" />
       <SafeAreaView className="flex-1">
         <View className="flex-1 px-6 py-4">
@@ -378,7 +370,7 @@ const BubbleBathGame = ({ route, navigation }) => {
               onPress={navigateBack}
               className="flex-row items-center"
             >
-              <ArrowLeft size={24} color="#56A7F5" />
+              <Feather name="arrow-left" size={24} color="#56A7F5" />
               <Text className="ml-2 text-primary-400 font-medium text-base">
                 Back to Games
               </Text>
@@ -390,7 +382,7 @@ const BubbleBathGame = ({ route, navigation }) => {
                   onPress={resetGame}
                   className="flex-row items-center bg-primary-100 px-4 py-2 rounded-lg mr-2"
                 >
-                  <RotateCw size={20} color="#1570DA" />
+                  <Feather name="refresh-cw" size={20} color="#1570DA" />
                   <Text className="ml-2 text-primary-600 font-medium">
                     Reset
                   </Text>
@@ -401,10 +393,11 @@ const BubbleBathGame = ({ route, navigation }) => {
                 onPress={() => setShowInstructions(!showInstructions)}
                 className="p-2"
               >
-                <HelpCircle color="#1570DA" size={24} />
+                <Feather name="help-circle" color="#1570DA" size={24} />
               </TouchableOpacity>
             </View>
           </View>
+
           {showInstructions && gameStarted && (
             <Animated.View
               entering={FadeIn}
@@ -413,7 +406,7 @@ const BubbleBathGame = ({ route, navigation }) => {
             >
               <View className="flex-row justify-between items-center mb-4">
                 <View className="flex-row items-center">
-                  <Info size={20} color="#1570DA" />
+                  <Feather name="info" size={20} color="#1570DA" />
                   <Text className="ml-2 font-semibold text-primary-800">
                     How to Play:
                   </Text>
@@ -448,6 +441,7 @@ const BubbleBathGame = ({ route, navigation }) => {
               </View>
             </Animated.View>
           )}
+
           <ScrollView
             className="flex-1"
             contentContainerStyle={{
@@ -473,7 +467,7 @@ const BubbleBathGame = ({ route, navigation }) => {
                     onPress={() => setGameStarted(true)}
                     className="bg-white py-4 rounded-xl flex-row justify-center items-center"
                   >
-                    <Trophy size={24} color="#1570DA" />
+                    <Feather name="award" size={24} color="#1570DA" />
                     <Text className="ml-2 text-primary-600 font-bold text-lg">
                       Start Game
                     </Text>
@@ -499,6 +493,7 @@ const BubbleBathGame = ({ route, navigation }) => {
                     </Text>
                   </View>
                 </View>
+
                 <View className="flex-row space-x-4">
                   <View className="flex-1">
                     <Text className="text-lg font-semibold text-primary-600 mb-2">
@@ -528,10 +523,18 @@ const BubbleBathGame = ({ route, navigation }) => {
                           >
                             <View className="flex-row items-center">
                               {matchedPairs.includes(word.pairId) && (
-                                <CheckCircle size={20} color="#12B76A" />
+                                <Feather
+                                  name="check-circle"
+                                  size={20}
+                                  color="#12B76A"
+                                />
                               )}
                               {incorrectPairs.includes(word.pairId) && (
-                                <XCircle size={20} color="#F04438" />
+                                <Feather
+                                  name="x-circle"
+                                  size={20}
+                                  color="#F04438"
+                                />
                               )}
                               <Text
                                 className={`
@@ -553,6 +556,7 @@ const BubbleBathGame = ({ route, navigation }) => {
                       ))}
                     </View>
                   </View>
+
                   <View className="flex-1">
                     <Text className="text-lg font-semibold text-secondary-600 mb-2">
                       Indonesian Words
@@ -581,10 +585,18 @@ const BubbleBathGame = ({ route, navigation }) => {
                           >
                             <View className="flex-row items-center">
                               {matchedPairs.includes(word.pairId) && (
-                                <CheckCircle size={20} color="#12B76A" />
+                                <Feather
+                                  name="check-circle"
+                                  size={20}
+                                  color="#12B76A"
+                                />
                               )}
                               {incorrectPairs.includes(word.pairId) && (
-                                <XCircle size={20} color="#F04438" />
+                                <Feather
+                                  name="x-circle"
+                                  size={20}
+                                  color="#F04438"
+                                />
                               )}
                               <Text
                                 className={`
@@ -610,6 +622,7 @@ const BubbleBathGame = ({ route, navigation }) => {
               </View>
             )}
           </ScrollView>
+
           {isGameComplete && (
             <View
               className="absolute inset-0 bg-black/70 items-center justify-center"
@@ -643,7 +656,7 @@ const BubbleBathGame = ({ route, navigation }) => {
                         className="items-center justify-center"
                       >
                         <View className="bg-success-50 p-4 rounded-full">
-                          <Trophy size={48} color="#12B76A" />
+                          <Feather name="award" size={48} color="#12B76A" />
                         </View>
                       </Animated.View>
                     </View>
@@ -705,7 +718,7 @@ const BubbleBathGame = ({ route, navigation }) => {
                         onPress={navigateBack}
                         className="flex-row items-center justify-center mb-6"
                       >
-                        <ArrowLeft color="#56A7F5" size={24} />
+                        <Feather name="arrow-left" color="#56A7F5" size={24} />
                         <Text className="ml-2 text-primary-400 font-medium text-base">
                           Back to Games
                         </Text>
